@@ -57,11 +57,48 @@ num_not_weapons = """
 """
 
 char_items = """
-  SELECT name, COUNT(*) FROM charactercreator_character
-  INNER JOIN charactercreator_character_inventory
-  GROUP BY name
-  ORDER BY COUNT(*) DESC
+  SELECT c.name, COUNT(distinct inv.item_id) as item_count FROM charactercreator_character c
+  LEFT JOIN charactercreator_character_inventory inv
+  ON c.character_id = inv.character_id
+  GROUP BY c.name
+  ORDER BY COUNT(inv.item_id) DESC
   LIMIT 20;
+"""
+
+char_weapons = """
+  SELECT c.character_id, COUNT(distinct w.item_ptr_id) as weapon_count 
+  FROM charactercreator_character as c
+  LEFT JOIN charactercreator_character_inventory inv
+  ON c.character_id = inv.character_id
+  LEFT JOIN armory_weapon w 
+  ON inv.item_id = w.item_ptr_id
+  GROUP BY c.character_id
+  ORDER BY weapon_count DESC
+  LIMIT 20;
+"""
+
+avg_item = """
+SELECT AVG(item_count) as avg_item_count
+FROM(
+    SELECT c.name, COUNT(distinct inv.item_id) as item_count 
+    FROM charactercreator_character c
+    LEFT JOIN charactercreator_character_inventory inv
+    ON c.character_id = inv.character_id
+    GROUP BY c.name
+  ) sub
+"""
+
+avg_wepaon = """
+  SELECT AVG(weapon_count) as avg_weapon
+  FROM(
+    SELECT c.character_id, COUNT(distinct w.item_ptr_id) as weapon_count 
+    FROM charactercreator_character c
+    LEFT JOIN charactercreator_character_inventory inv
+    ON c.character_id = inv.character_id
+    LEFT JOIN armory_weapon w 
+    ON inv.item_id = w.item_ptr_id
+    GROUP BY c.character_id
+  )
 """
 if __name__ == "__main__":
     conn = connect_to_db()
@@ -73,11 +110,17 @@ if __name__ == "__main__":
     fighters = execute_query(curs, fighter)
     necromancers = execute_query(curs, necromancer)
     items = execute_query(curs, num_items)
-    weapons = execute_query(curs, num_weapons)
+    weapons = execute_query(curs, num_weapons)waw
     non_weapons = execute_query(curs, num_not_weapons)
     character_items = execute_query(curs, char_items)
+    character_weapons = execute_query(curs, char_weapons)
+    avg_items = execute_query(curs, avg_item)
+    avg_weapons = execute_query(curs, avg_wepaon)
     print(results1)
     print(mages, thiefs, clerics, fighters, necromancers)
     print(items)
     print(weapons, non_weapons)
     print(character_items)
+    print(character_weapons)
+    print(avg_items)
+    print(avg_weapons)
